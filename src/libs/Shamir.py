@@ -1,6 +1,8 @@
 import random 
 from math import ceil 
 from decimal import *
+from utils.functions import egcd
+from utils.functions import mod_inverse
 
 
 class Shamir:
@@ -17,20 +19,25 @@ class Shamir:
     def reconstructSecret(self, shares): 
         # Combines shares using Lagranges interpolation.  
         # Shares is an array of shares being combined 
-        sums, prod_arr = 0, [] 
+        sums = 0
 
         for j in range(len(shares)): 
             xj, yj = shares[j][0],shares[j][1] 
-            prod = Decimal(1) 
+            prod = 1 
+            num = 1
+            den = 1
 
             for i in range(len(shares)): 
                 xi = shares[i][0] 
-                if i != j: prod *= Decimal(Decimal(xi)/(xi-xj)) 
 
-            prod *= yj 
-            sums += Decimal(prod) 
-        self.reconstructedSecret = int(round(Decimal(sums),0)) 
-        return int(round(Decimal(sums),0)) 
+                if (i != j):
+                  num = (num * (-xi)) % self.fieldSize
+                  den = (den * (xj - xi)) % self.fieldSize
+            prod = num * mod_inverse(den, self.fieldSize)
+
+            sums = (self.fieldSize + sums + (yj * prod)) % self.fieldSize
+        self.reconstructedSecret = sums
+        return sums
 
     def generatePool(self):
         # Generate pool to obtain t random shares
@@ -51,6 +58,6 @@ class Shamir:
         for i in range(1,self.n+1): 
             r = random.randrange(1, self.fieldSize) 
             # Evaluates a polynomial in x with coeff being the coefficient list 
-            shares.append([r, sum([r**(len(cfs)-i-1) * cfs[i] for i in range(len(cfs))])]) 
+            shares.append([r, sum([((r**(len(cfs)-i-1))%self.fieldSize * cfs[i])%self.fieldSize for i in range(len(cfs))])]) 
         self.shares = shares
         return shares 

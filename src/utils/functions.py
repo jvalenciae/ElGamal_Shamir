@@ -21,3 +21,20 @@ def modPow(x, y, p) :
     x = (x * x) % p 
         
   return res
+
+#Extended Greatest Common Divisor 2.0
+def egcd(a, b):
+    if a == 0:
+        return (b, 0, 1)
+    else:
+        g, y, x = egcd(b % a, a)
+        return (g, x - (b // a) * y, y)
+
+#Moduled Inverse
+def mod_inverse(k, prime):
+    k = k % prime
+    if k < 0:
+        r = egcd(prime, -k)[2]
+    else:
+        r = egcd(prime, k)[2]
+    return (prime + r) % prime
